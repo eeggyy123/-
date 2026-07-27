@@ -25,7 +25,10 @@ const defaultSettings = {
 };
 
 export const WarawaraSprite: React.FC = () => {
-  const [position, setPosition] = useState({ x: window.innerWidth / 2, y: window.innerHeight / 3 });
+  const [position, setPosition] = useState({
+    x: window.innerWidth / 2,
+    y: Math.min(140, window.innerHeight * 0.16),
+  });
   const [velocity, setVelocity] = useState({ x: 1, y: -0.5 });
   const [state, setState] = useState<SpriteState>('flying');
   const [expression, setExpression] = useState<ExpressionType>('normal');
@@ -34,25 +37,15 @@ export const WarawaraSprite: React.FC = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [showChat, setShowChat] = useState(false);
   const [settings, setSettings] = useState(defaultSettings);
-  const [sleepTimer, setSleepTimer] = useState(0);
-  const [wakeUpTimer, setWakeUpTimer] = useState(0);
-  const [flyingHeight, setFlyingHeight] = useState(window.innerHeight / 3);
+  const [flyingHeight] = useState(window.innerHeight * 0.24);
   const [showParticles, setShowParticles] = useState(false);
   const [celebrateParticles, setCelebrateParticles] = useState(false);
+  const [isPageScrolled, setIsPageScrolled] = useState(window.scrollY > 120);
   
   const spriteRef = useRef<HTMLDivElement>(null);
   const animationRef = useRef<number>(0);
   const lastTimeRef = useRef<number>(0);
   const dragOffsetRef = useRef({ x: 0, y: 0 });
-
-  useEffect(() => {
-    const handleEggUnlocked = (e: CustomEvent) => {
-      const { eggName } = e.detail || {};
-      startCelebration(eggName);
-    };
-    window.addEventListener('egg-unlocked', handleEggUnlocked as EventListener);
-    return () => window.removeEventListener('egg-unlocked', handleEggUnlocked as EventListener);
-  }, []);
 
   const startCelebration = useCallback((eggName?: string) => {
     if (state === 'celebrating') return;
@@ -62,8 +55,8 @@ export const WarawaraSprite: React.FC = () => {
     setExpression('starry');
     setShowParticles(true);
     setCelebrateParticles(true);
-    setShowSpeech(true);
-    setSpeechText(eggName ? `🎉 解锁彩蛋：${eggName}！` : '🎉 太棒了！');
+    setShowSpeech(!eggName);
+    if (!eggName) setSpeechText('太棒了！');
     
     setTimeout(() => {
       setState(prevState === 'sleeping' ? 'flying' : prevState);
@@ -77,6 +70,21 @@ export const WarawaraSprite: React.FC = () => {
       setExpression('normal');
     }, 5000);
   }, [state]);
+
+  useEffect(() => {
+    const handleScroll = () => setIsPageScrolled(window.scrollY > 120);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    const handleEggUnlocked = (event: CustomEvent) => {
+      const { eggName } = event.detail || {};
+      startCelebration(eggName);
+    };
+    window.addEventListener('egg-unlocked', handleEggUnlocked as EventListener);
+    return () => window.removeEventListener('egg-unlocked', handleEggUnlocked as EventListener);
+  }, [startCelebration]);
 
   useEffect(() => {
     const handleAnimation = (timestamp: number) => {
@@ -198,37 +206,29 @@ export const WarawaraSprite: React.FC = () => {
   }, [state, settings.behaviorFrequency]);
 
   useEffect(() => {
-    if (state === 'flying') {
-      setSleepTimer(prev => {
-        if (prev >= 60000) {
-          setState('sleeping');
-          setShowSpeech(true);
-          setSpeechText('好困啊~ 睡一会儿...');
-          setTimeout(() => setShowSpeech(false), 3000);
-          return 0;
-        }
-        return prev + 1000;
-      });
-    } else {
-      setSleepTimer(0);
-    }
+    if (state !== 'flying') return;
+
+    const timer = window.setTimeout(() => {
+      setState('sleeping');
+      setShowSpeech(true);
+      setSpeechText('好困啊~ 睡一会儿...');
+      window.setTimeout(() => setShowSpeech(false), 3000);
+    }, 60000);
+
+    return () => window.clearTimeout(timer);
   }, [state]);
 
   useEffect(() => {
-    if (state === 'sleeping') {
-      setWakeUpTimer(prev => {
-        if (prev >= 15000) {
-          setState('flying');
-          setShowSpeech(true);
-          setSpeechText('睡醒啦！精神满满~');
-          setTimeout(() => setShowSpeech(false), 3000);
-          return 0;
-        }
-        return prev + 1000;
-      });
-    } else {
-      setWakeUpTimer(0);
-    }
+    if (state !== 'sleeping') return;
+
+    const timer = window.setTimeout(() => {
+      setState('flying');
+      setShowSpeech(true);
+      setSpeechText('睡醒啦！精神满满~');
+      window.setTimeout(() => setShowSpeech(false), 3000);
+    }, 15000);
+
+    return () => window.clearTimeout(timer);
   }, [state]);
 
   useEffect(() => {
@@ -271,7 +271,7 @@ export const WarawaraSprite: React.FC = () => {
     }
   }, [state]);
 
-  const handleMouseUp = useCallback((e: MouseEvent) => {
+  const handleMouseUp = useCallback(() => {
     if (state === 'dragging') {
       setState('flying');
       setExpression('happy');
@@ -727,7 +727,9 @@ export const WarawaraSprite: React.FC = () => {
     <>
       <div
         ref={spriteRef}
-        className={`fixed z-[100] cursor-grab active:cursor-grabbing select-none transition-all ${
+        className={`warawara-sprite fixed z-[100] cursor-grab active:cursor-grabbing select-none transition-all ${
+          isPageScrolled ? 'is-page-scrolled' : ''
+        } ${
           state === 'dragging' ? '' : 'transition-none'
         }`}
         style={{

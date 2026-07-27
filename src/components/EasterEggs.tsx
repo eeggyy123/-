@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Sparkles, Heart, Music, Star, Cloud, Moon, Sun, Rainbow, HelpCircle, Zap } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Sparkles, Heart, Music, Star, Moon, Rainbow, HelpCircle, Zap } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 import { useAudioStore } from '../store/audioStore';
 
 interface EasterEgg {
@@ -13,21 +14,64 @@ interface EasterEgg {
   total?: number;
 }
 
+const eggNames: Record<string, string> = {
+  'double-click': '双击惊喜',
+  'music-10s': '音乐鉴赏家',
+  explorer: '探索达人',
+  'night-owl': '夜猫子',
+  rainbow: '彩虹祝福',
+};
+
+const readUnlockedEggs = () => {
+  try {
+    const saved = JSON.parse(sessionStorage.getItem('ghibli-unlocked-eggs') || '[]');
+    return new Set<string>(Array.isArray(saved) ? saved : []);
+  } catch {
+    return new Set<string>();
+  }
+};
+
 export const EasterEggs: React.FC = () => {
+  const location = useLocation();
+  const isMoviePage = location.pathname.startsWith('/movie/');
   const { isPlaying, currentTime } = useAudioStore();
-  const [eggs, setEggs] = useState<EasterEgg[]>([
-    { id: 'double-click', name: '双击惊喜', description: '双击任意电影卡片', hint: '试试用鼠标快速点击两下...', icon: <Sparkles className="w-5 h-5" />, unlocked: false },
-    { id: 'music-10s', name: '音乐鉴赏家', description: '播放音乐超过10秒', hint: '让久石让的音乐多陪伴你一会儿', icon: <Music className="w-5 h-5" />, unlocked: false, progress: 0, total: 10 },
-    { id: 'explorer', name: '探索达人', description: '浏览5部以上电影', hint: '多看看不同的电影世界吧', icon: <Star className="w-5 h-5" />, unlocked: false, progress: 0, total: 5 },
-    { id: 'night-owl', name: '夜猫子', description: '在22点后访问网站', hint: '深夜的吉卜力有特别的魔力', icon: <Moon className="w-5 h-5" />, unlocked: false },
-    { id: 'rainbow', name: '彩虹祝福', description: '连续点击5次彩虹图标', hint: '左下角有一道彩虹...', icon: <Rainbow className="w-5 h-5" />, unlocked: false, progress: 0, total: 5 },
-  ]);
+  const [eggs, setEggs] = useState<EasterEgg[]>(() => {
+    const unlocked = readUnlockedEggs();
+    return [
+      { id: 'double-click', name: '双击惊喜', description: '双击任意电影卡片', hint: '试试用鼠标快速点击两下...', icon: <Sparkles className="w-5 h-5" />, unlocked: unlocked.has('double-click') },
+      { id: 'music-10s', name: '音乐鉴赏家', description: '播放音乐超过10秒', hint: '让久石让的音乐多陪伴你一会儿', icon: <Music className="w-5 h-5" />, unlocked: unlocked.has('music-10s'), progress: 0, total: 10 },
+      { id: 'explorer', name: '探索达人', description: '浏览5部以上电影', hint: '多看看不同的电影世界吧', icon: <Star className="w-5 h-5" />, unlocked: unlocked.has('explorer'), progress: 0, total: 5 },
+      { id: 'night-owl', name: '夜猫子', description: '在22点后访问网站', hint: '深夜的吉卜力有特别的魔力', icon: <Moon className="w-5 h-5" />, unlocked: unlocked.has('night-owl') },
+      { id: 'rainbow', name: '彩虹祝福', description: '连续点击5次彩虹图标', hint: '左下角有一道彩虹...', icon: <Rainbow className="w-5 h-5" />, unlocked: unlocked.has('rainbow'), progress: 0, total: 5 },
+    ];
+  });
   
   const [showNotification, setShowNotification] = useState<string | null>(null);
   const [showEggPanel, setShowEggPanel] = useState(false);
-  const [visitCount, setVisitCount] = useState(0);
   const [rainbowClicks, setRainbowClicks] = useState(0);
   const [showHintBubble, setShowHintBubble] = useState(false);
+  const unlockedEggsRef = useRef(readUnlockedEggs());
+
+  const showNotificationToast = useCallback((eggName: string) => {
+    setShowNotification(eggName);
+    window.setTimeout(() => setShowNotification(null), 3000);
+  }, []);
+
+  const unlockEgg = useCallback((eggId: string) => {
+    if (unlockedEggsRef.current.has(eggId)) return;
+
+    const eggName = eggNames[eggId];
+    if (!eggName) return;
+
+    unlockedEggsRef.current.add(eggId);
+    sessionStorage.setItem('ghibli-unlocked-eggs', JSON.stringify([...unlockedEggsRef.current]));
+    setEggs(prev => prev.map(candidate =>
+      candidate.id === eggId ? { ...candidate, unlocked: true } : candidate
+    ));
+    showNotificationToast(eggName);
+    const event = new CustomEvent('egg-unlocked', { detail: { eggId, eggName } });
+    window.dispatchEvent(event);
+  }, [showNotificationToast]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -43,7 +87,6 @@ export const EasterEggs: React.FC = () => {
 
   useEffect(() => {
     const count = parseInt(sessionStorage.getItem('movieVisitCount') || '0');
-    setVisitCount(count);
     setEggs(prev => prev.map(egg => 
       egg.id === 'explorer' ? { ...egg, progress: Math.min(count, egg.total || 5) } : egg
     ));
@@ -63,45 +106,31 @@ export const EasterEggs: React.FC = () => {
 
     window.addEventListener('dblclick', handleDoubleClick);
     return () => window.removeEventListener('dblclick', handleDoubleClick);
-  }, []);
+  }, [unlockEgg]);
 
   useEffect(() => {
     if (isPlaying && currentTime >= 10) {
-      const musicEgg = eggs.find(e => e.id === 'music-10s');
-      if (musicEgg && !musicEgg.unlocked) {
-        unlockEgg('music-10s');
-      }
+      unlockEgg('music-10s');
     }
-    
-    setEggs(prev => prev.map(egg => 
-      egg.id === 'music-10s' 
-        ? { ...egg, progress: Math.min(Math.floor(currentTime), egg.total || 10) } 
-        : egg
-    ));
-  }, [isPlaying, currentTime, eggs]);
+
+    setEggs(prev => {
+      const nextProgress = Math.min(Math.floor(currentTime), 10);
+      const currentProgress = prev.find(egg => egg.id === 'music-10s')?.progress;
+      if (currentProgress === nextProgress) return prev;
+
+      return prev.map(egg =>
+        egg.id === 'music-10s'
+          ? { ...egg, progress: Math.min(nextProgress, egg.total || 10) }
+          : egg
+      );
+    });
+  }, [isPlaying, currentTime, unlockEgg]);
 
   useEffect(() => {
     setEggs(prev => prev.map(egg => 
       egg.id === 'rainbow' ? { ...egg, progress: rainbowClicks } : egg
     ));
   }, [rainbowClicks]);
-
-  const unlockEgg = useCallback((eggId: string) => {
-    setEggs(prev => prev.map(egg => {
-      if (egg.id === eggId && !egg.unlocked) {
-        showNotificationToast(egg.name);
-        const event = new CustomEvent('egg-unlocked', { detail: { eggId, eggName: egg.name } });
-        window.dispatchEvent(event);
-        return { ...egg, unlocked: true };
-      }
-      return egg;
-    }));
-  }, []);
-
-  const showNotificationToast = (eggName: string) => {
-    setShowNotification(eggName);
-    setTimeout(() => setShowNotification(null), 3000);
-  };
 
   const handleRainbowClick = () => {
     const newCount = rainbowClicks + 1;
@@ -112,21 +141,6 @@ export const EasterEggs: React.FC = () => {
       setRainbowClicks(0);
     }
   };
-
-  const handleMovieVisit = () => {
-    const newCount = visitCount + 1;
-    setVisitCount(newCount);
-    sessionStorage.setItem('movieVisitCount', newCount.toString());
-    
-    if (newCount >= 5) {
-      unlockEgg('explorer');
-    }
-  };
-
-  React.useEffect(() => {
-    (window as any).handleMovieVisit = handleMovieVisit;
-    (window as any).unlockEgg = unlockEgg;
-  }, [handleMovieVisit, unlockEgg]);
 
   return (
     <>
@@ -156,7 +170,7 @@ export const EasterEggs: React.FC = () => {
 
       <button
         onClick={() => setShowEggPanel(!showEggPanel)}
-        className="fixed top-20 left-6 z-[100] glass-effect rounded-full w-12 h-12 flex items-center justify-center hover:bg-white/30 transition-all hover:scale-110 shadow-xl animate-pulse"
+        className={`easter-egg-toggle fixed z-[100] glass-effect rounded-lg w-12 h-12 flex items-center justify-center hover:bg-white/30 transition hover:scale-105 shadow-xl animate-pulse ${isMoviePage ? 'left-[9.25rem] top-5' : 'left-5 top-20'}`}
         title="查看彩蛋收集"
       >
         <Sparkles className="w-6 h-6 text-ghibli-sunset" />
@@ -168,7 +182,7 @@ export const EasterEggs: React.FC = () => {
       </button>
 
       {showEggPanel && (
-        <div className="fixed top-36 left-6 z-[99] glass-effect rounded-2xl p-6 w-80 animate-slide-in-left max-h-[70vh] overflow-y-auto">
+        <div className={`fixed left-5 z-[99] glass-effect rounded-2xl p-6 w-80 animate-slide-in-left max-h-[70vh] overflow-y-auto ${isMoviePage ? 'top-20' : 'top-36'}`}>
           <h3 className="font-serif text-xl font-bold text-white mb-2 flex items-center gap-2">
             <Star className="w-5 h-5 text-yellow-400" />
             彩蛋收集
@@ -260,11 +274,3 @@ export const EasterEggs: React.FC = () => {
     </>
   );
 };
-
-function LockIcon() {
-  return (
-    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-    </svg>
-  );
-}

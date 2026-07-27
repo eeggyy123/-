@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Play, Music } from 'lucide-react';
 import { Movie } from '../data/movies';
 import { useAppStore } from '../store/appStore';
+import { navigateWithWind } from '../lib/viewTransition';
+import { JourneyLocationState } from '../lib/journeyNavigation';
 
 interface MovieCardProps {
   movie: Movie;
@@ -66,7 +68,10 @@ export const MovieCard: React.FC<MovieCardProps> = ({ movie, isActive = false, o
 
   const handleClick = () => {
     sessionStorage.setItem('scrollPosition', window.scrollY.toString());
-    navigate(`/movie/${movie.id}`);
+    cardRef.current?.style.setProperty('view-transition-name', 'movie-poster');
+    navigateWithWind(() => navigate(`/movie/${movie.id}`, {
+      state: { scrollTo: 'top' } satisfies JourneyLocationState,
+    }));
   };
 
   const handlePlayMusic = (e: React.MouseEvent) => {
@@ -94,6 +99,12 @@ export const MovieCard: React.FC<MovieCardProps> = ({ movie, isActive = false, o
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
       onClick={handleClick}
+      role="link"
+      tabIndex={0}
+      aria-label={`进入《${movie.title}》`}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') handleClick();
+      }}
     >
       <div className="relative aspect-[3/4]">
         <img

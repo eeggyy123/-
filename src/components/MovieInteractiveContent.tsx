@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Lightbulb, Sparkles, Heart, Star, ArrowRight, Gift, Moon, Sun, Cloud, Mountain } from 'lucide-react';
 import { Movie, getMovieById, movies } from '../data/movies';
+import { JourneyLocationState } from '../lib/journeyNavigation';
+import { navigateWithWind } from '../lib/viewTransition';
 
 interface MovieInteractiveContentProps {
   movie: Movie;
@@ -62,8 +64,21 @@ export const MovieInteractiveContent: React.FC<MovieInteractiveContentProps> = (
   };
 
   const handleRecommendClick = (movieId: string) => {
-    sessionStorage.setItem('scrollPosition', '0');
-    navigate(`/movie/${movieId}`);
+    navigateWithWind(() => navigate(`/movie/${movieId}`, {
+      state: {
+        scrollTo: 'top',
+        passage: {
+          id: `recommendation-${movie.id}-${movieId}`,
+          kind: 'recommendation',
+          eyebrow: '一条来自推荐页的细线',
+          title: `《${movie.title}》仍替你留着刚才那一页`,
+          description: '看完新的风景，可以沿这条书签回到原来的电影，继续刚才没有读完的内容。',
+          returnLabel: `回到《${movie.title}》`,
+          returnPath: `/movie/${movie.id}`,
+          returnAnchor: 'movie-details',
+        },
+      } satisfies JourneyLocationState,
+    }));
   };
 
   const moodMatches = getMoodMatches(movie);

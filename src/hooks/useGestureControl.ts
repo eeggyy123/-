@@ -74,14 +74,16 @@ export const useGestureControl = (): UseGestureControlReturn => {
   }, [isEnabled]);
 
   useEffect(() => {
+    const video = videoRef.current;
+
     if (isEnabled) {
       initHands();
     } else {
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
       }
-      if (videoRef.current?.srcObject) {
-        const stream = videoRef.current.srcObject as MediaStream;
+      if (video?.srcObject) {
+        const stream = video.srcObject as MediaStream;
         stream.getTracks().forEach((track) => track.stop());
       }
       handsRef.current = null;
@@ -92,8 +94,8 @@ export const useGestureControl = (): UseGestureControlReturn => {
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
       }
-      if (videoRef.current?.srcObject) {
-        const stream = videoRef.current.srcObject as MediaStream;
+      if (video?.srcObject) {
+        const stream = video.srcObject as MediaStream;
         stream.getTracks().forEach((track) => track.stop());
       }
     };

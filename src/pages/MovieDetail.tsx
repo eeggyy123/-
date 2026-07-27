@@ -1,21 +1,71 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Play, Pause, Volume2, ChevronLeft, ChevronRight, Calendar, User, Music, Star } from 'lucide-react';
+import React, { useState, useEffect, useLayoutEffect } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { ArrowLeft, House, Play, Pause, Volume2, ChevronLeft, ChevronRight, Calendar, User, Music, Star } from 'lucide-react';
 import { getMovieById } from '../data/movies';
 import { ParallaxBackground } from '../components/ParallaxBackground';
 import { MovieInteractiveContent } from '../components/MovieInteractiveContent';
 import { VideoSection } from '../components/VideoSection';
+import { WindRoutePortal } from '../components/WindRoutePortal';
+import { HowlMagicDoor } from '../components/HowlMagicDoor';
+import { SpiritTrainJourney } from '../components/SpiritTrainJourney';
+import { ReturnPassage } from '../components/ReturnPassage';
 import { useAudioStore, audioManager } from '../store/audioStore';
 import { useAppStore } from '../store/appStore';
+import { useJourneyStore } from '../store/journeyStore';
+import { useTimeAtmosphere } from '../hooks/useTimeAtmosphere';
+import { navigateWithWind } from '../lib/viewTransition';
+import { JourneyLocationState } from '../lib/journeyNavigation';
 
 export const MovieDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const [currentStillIndex, setCurrentStillIndex] = useState(0);
   const { isPlaying, currentTime, duration, volume } = useAudioStore();
   const { setCurrentMovie, setShowAudioPlayer } = useAppStore();
+  const { markMovieVisited, markPassageReturned, unlockDiscovery } = useJourneyStore();
+  const { phase } = useTimeAtmosphere();
 
   const movie = getMovieById(id || '');
+  const navigationState = location.state as JourneyLocationState | null;
+
+  useLayoutEffect(() => {
+    if (!movie) return;
+
+    const root = document.documentElement;
+    const previousScrollBehavior = root.style.scrollBehavior;
+    root.style.scrollBehavior = 'auto';
+
+    const scrollToDestination = () => {
+      if (navigationState?.scrollTo && navigationState.scrollTo !== 'top') {
+        const target = document.getElementById(navigationState.scrollTo);
+        if (target) {
+          target.scrollIntoView({ behavior: 'auto', block: 'start' });
+          return;
+        }
+      }
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    };
+
+    scrollToDestination();
+    const frame = window.requestAnimationFrame(scrollToDestination);
+    let lateFrame = 0;
+    const settledFrame = window.requestAnimationFrame(() => {
+      lateFrame = window.requestAnimationFrame(scrollToDestination);
+    });
+    const settleTimer = window.setTimeout(() => {
+      scrollToDestination();
+      root.style.scrollBehavior = previousScrollBehavior;
+    }, 100);
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.cancelAnimationFrame(settledFrame);
+      window.cancelAnimationFrame(lateFrame);
+      window.clearTimeout(settleTimer);
+      root.style.scrollBehavior = previousScrollBehavior;
+    };
+  }, [location.key, movie, navigationState?.scrollTo]);
 
   useEffect(() => {
     if (!movie) {
@@ -28,6 +78,7 @@ export const MovieDetail: React.FC = () => {
       setCurrentMovie(movie);
       setShowAudioPlayer(true);
       audioManager.play(movie.soundtrack);
+      markMovieVisited(movie.id);
       
       const visitCount = parseInt(sessionStorage.getItem('movieVisitCount') || '0');
       sessionStorage.setItem('movieVisitCount', (visitCount + 1).toString());
@@ -36,7 +87,7 @@ export const MovieDetail: React.FC = () => {
     return () => {
       audioManager.fadeOut(500);
     };
-  }, [movie, setCurrentMovie, setShowAudioPlayer]);
+  }, [markMovieVisited, movie, setCurrentMovie, setShowAudioPlayer]);
 
   if (!movie) return null;
 
@@ -65,27 +116,62 @@ export const MovieDetail: React.FC = () => {
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   const handleBack = () => {
-    sessionStorage.setItem('scrollPosition', window.scrollY.toString());
-    navigate('/');
+    const passage = navigationState?.passage;
+    if (passage) {
+      markPassageReturned(passage.id);
+      unlockDiscovery('return-thread');
+    }
+    navigateWithWind(() => navigate(passage?.returnPath || '/', {
+      state: passage
+        ? ({ scrollTo: passage.returnAnchor } satisfies JourneyLocationState)
+        : undefined,
+    }));
+  };
+
+  const handleHome = () => {
+    navigateWithWind(() => navigate('/'));
   };
 
   return (
-    <div className="min-h-screen relative">
-      <ParallaxBackground colors={movie.colorTheme} />
+    <div className="min-h-screen relative page-cinematic-enter">
+      <ParallaxBackground
+        colors={movie.colorTheme}
+        image={movie.stills[currentStillIndex] || movie.cover}
+        timePhase={phase}
+      />
 
       <div className="relative z-10">
-        <button
-          onClick={handleBack}
-          className="fixed top-6 left-6 z-50 w-12 h-12 rounded-full glass-effect flex items-center justify-center text-white hover:bg-white/20 transition-all hover:scale-110"
-        >
-          <ArrowLeft className="w-6 h-6" />
-        </button>
+        <nav className="fixed left-5 top-5 z-[150] flex items-center gap-2" aria-label="电影世界导航">
+          {navigationState?.passage && (
+            <button
+              type="button"
+              onClick={handleBack}
+              className="glass-effect flex h-12 w-12 items-center justify-center rounded-lg text-white transition-all hover:scale-105 hover:bg-white/20"
+              aria-label="沿来路返回"
+              title="沿来路返回"
+            >
+              <ArrowLeft className="h-6 w-6" />
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={handleHome}
+            className="glass-effect flex h-12 w-12 items-center justify-center rounded-lg text-white transition-all hover:scale-105 hover:bg-white/20"
+            aria-label="返回主页"
+            title="返回主页"
+          >
+            <House className="h-5 w-5" />
+          </button>
+        </nav>
+
+        <ReturnPassage />
 
         <section className="relative h-[60vh] md:h-[70vh] overflow-hidden">
           <img
             src={movie.stills[currentStillIndex] || movie.cover}
             alt={movie.title}
             className="w-full h-full object-cover transition-all duration-700"
+            style={{ viewTransitionName: 'movie-poster' }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
 
@@ -151,7 +237,7 @@ export const MovieDetail: React.FC = () => {
           </div>
         </section>
 
-        <section className="py-12 px-4 md:px-10 lg:px-20">
+        <section id="movie-details" className="scroll-mt-4 py-12 px-4 md:px-10 lg:px-20">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-8">
               <div className="glass-effect rounded-3xl p-6 md:p-8">
@@ -294,6 +380,10 @@ export const MovieDetail: React.FC = () => {
             </div>
           </div>
         </section>
+
+        <WindRoutePortal key={`wind-route-${movie.id}`} movie={movie} />
+        <HowlMagicDoor key={`magic-door-${movie.id}`} movie={movie} />
+        <SpiritTrainJourney key={`water-train-${movie.id}`} movie={movie} />
 
         <footer className="py-8 px-4 text-center">
           <p className="text-white/40 text-xs">

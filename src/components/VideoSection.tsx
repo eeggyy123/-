@@ -9,6 +9,7 @@ interface Video {
   url: string;
   duration: string;
   movieId: string;
+  source?: 'youtube' | 'local';
 }
 
 const defaultVideos: Video[] = [
@@ -59,6 +60,15 @@ const defaultVideos: Video[] = [
     url: 'https://www.youtube.com/embed/74qk1jE5K2M',
     duration: '4:12',
     movieId: 'ponyo',
+  },
+  {
+    id: 'the-wind-rises-local-video',
+    title: '起风了 - 精彩片段',
+    thumbnail: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=The%20Wind%20Rises%20anime%20movie%20poster%20with%20vintage%20airplane%20flying%20through%20clouds%20with%20romantic%20sky%20Studio%20Ghibli%20style&image_size=portrait_4_3',
+    url: '/videos/the-wind-rises.mp4',
+    duration: '5:21',
+    movieId: 'the-wind-rises',
+    source: 'local',
   },
 ];
 
@@ -264,15 +274,29 @@ export const VideoSection: React.FC<VideoSectionProps> = ({ movie }) => {
       {selectedVideo && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[200] animate-fade-in" onClick={handleClose}>
           <div className="w-full max-w-4xl mx-4 aspect-video rounded-2xl overflow-hidden relative" onClick={(e) => e.stopPropagation()}>
-            <iframe
-              src={selectedVideo.url}
-              title={selectedVideo.title}
-              className="w-full h-full"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            />
-            
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+            {selectedVideo.source === 'local' ? (
+              <video
+                key={selectedVideo.url}
+                src={selectedVideo.url}
+                title={selectedVideo.title}
+                className="w-full h-full bg-black object-contain"
+                controls
+                autoPlay
+              >
+                你的浏览器不支持 HTML5 视频播放。
+              </video>
+            ) : (
+              <>
+                <iframe
+                  src={selectedVideo.url}
+                  title={selectedVideo.title}
+                  className="w-full h-full"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+              </>
+            )}
             
             <button
               onClick={handleClose}
@@ -281,21 +305,26 @@ export const VideoSection: React.FC<VideoSectionProps> = ({ movie }) => {
               <X className="w-5 h-5" />
             </button>
 
-            <button
-              onClick={prevVideo}
-              className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/50 flex items-center justify-center text-white hover:bg-black/70 transition-colors"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
+            {filteredVideos.length > 1 && (
+              <>
+                <button
+                  onClick={prevVideo}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/50 flex items-center justify-center text-white hover:bg-black/70 transition-colors"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
 
-            <button
-              onClick={nextVideo}
-              className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/50 flex items-center justify-center text-white hover:bg-black/70 transition-colors"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
+                <button
+                  onClick={nextVideo}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/50 flex items-center justify-center text-white hover:bg-black/70 transition-colors"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </>
+            )}
 
-            <div className="absolute bottom-4 left-4 right-4 flex items-center gap-4">
+            {selectedVideo.source !== 'local' && (
+              <div className="absolute bottom-4 left-4 right-4 flex items-center gap-4">
               <button
                 onClick={togglePlay}
                 className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center text-white hover:bg-white/30 transition-all"
@@ -329,7 +358,8 @@ export const VideoSection: React.FC<VideoSectionProps> = ({ movie }) => {
               <button className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-white hover:bg-white/30 transition-all">
                 <Maximize className="w-5 h-5" />
               </button>
-            </div>
+              </div>
+            )}
           </div>
         </div>
       )}
