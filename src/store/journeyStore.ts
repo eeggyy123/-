@@ -10,6 +10,7 @@ interface JourneyState {
   openedDoors: string[];
   trainTickets: number;
   returnedPassages: string[];
+  worldEchoes: string[];
   lastReturnedPassageId: string | null;
   lastMovieId: string | null;
   beginVisit: () => void;
@@ -19,6 +20,7 @@ interface JourneyState {
   openMagicDoor: (doorId: string) => void;
   collectTrainTicket: () => void;
   markPassageReturned: (passageId: string) => void;
+  collectWorldEcho: (movieId: string) => void;
 }
 
 export const useJourneyStore = create<JourneyState>()(
@@ -31,6 +33,7 @@ export const useJourneyStore = create<JourneyState>()(
       openedDoors: [],
       trainTickets: 0,
       returnedPassages: [],
+      worldEchoes: [],
       lastReturnedPassageId: null,
       lastMovieId: null,
       beginVisit: () => set((state) => ({ visitCount: state.visitCount + 1 })),
@@ -61,6 +64,11 @@ export const useJourneyStore = create<JourneyState>()(
         returnedPassages: state.returnedPassages.includes(passageId)
           ? state.returnedPassages
           : [...state.returnedPassages, passageId],
+      })),
+      collectWorldEcho: (movieId) => set((state) => ({
+        worldEchoes: state.worldEchoes.includes(movieId)
+          ? state.worldEchoes
+          : [...state.worldEchoes, movieId],
       })),
     }),
     {

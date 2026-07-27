@@ -6,7 +6,8 @@ export type DiscoveryId =
   | 'moving-door'
   | 'water-rail-ticket'
   | 'return-thread'
-  | 'crosswind-station';
+  | 'crosswind-station'
+  | 'three-world-echoes';
 
 export interface JourneyDiscovery {
   id: DiscoveryId;
@@ -63,6 +64,12 @@ export const journeyDiscoveries: JourneyDiscovery[] = [
     name: '没有时刻表的中转站',
     description: '三种来路在星图中央交汇。从此，风也可以替你决定下一站。',
     hint: '纸飞机、移动的门与水上列车，似乎正在把三枚印记带向同一个地方。',
+  },
+  {
+    id: 'three-world-echoes',
+    name: '三段世界回声',
+    description: '三件来自不同世界的小东西，在手册合上时发出了同一种风声。',
+    hint: '每个电影世界都有一件不在剧情里的小东西。试着停下来听一会儿。',
   },
 ];
 

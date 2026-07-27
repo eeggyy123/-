@@ -25,7 +25,6 @@ export const Home: React.FC = () => {
   const navigationState = location.state as JourneyLocationState | null;
 
   const currentMovie = movies[currentIndex];
-  const windMovie = useMemo(() => movies.find((movie) => movie.id === 'the-wind-rises') || movies[0], []);
   const howlMovie = useMemo(() => movies.find((movie) => movie.id === 'howls-moving-castle') || movies[0], []);
   const spiritMovie = useMemo(() => movies.find((movie) => movie.id === 'spirited-away') || movies[0], []);
   const lastMovie = useMemo(
@@ -110,16 +109,21 @@ export const Home: React.FC = () => {
   }, [currentMovie, setCurrentMovie, showAudioPlayer]);
 
   return (
-    <div className="relative min-h-screen text-white">
+    <div className="home-world relative min-h-screen text-white">
       <ParallaxBackground
-        colors={currentMovie.colorTheme}
-        image={currentMovie.stills[0] || currentMovie.cover}
+        colors={spiritMovie.colorTheme}
+        image="/images/home-water-train-horizon.png"
         timePhase={phase}
+        backgroundClassName="home-lower-background"
+        containerClassName="home-warm-atmosphere"
       />
 
       <div className="relative z-10">
         <section id="home-top" className="hero-stage relative flex min-h-[86svh] scroll-mt-0 flex-col items-center justify-center overflow-hidden px-5 pb-16 pt-24 text-center">
-          <div className="absolute left-1/2 top-7 flex -translate-x-1/2 items-center gap-3 whitespace-nowrap text-white/75">
+          <img src="/images/home-sky-castle.png" alt="" className="home-hero-image absolute inset-0 h-full w-full object-cover" />
+          <div className="home-hero-vignette absolute inset-0" aria-hidden="true" />
+
+          <div className="absolute left-1/2 top-7 z-10 flex -translate-x-1/2 items-center gap-3 whitespace-nowrap text-white/75">
             <Sparkles className="h-4 w-4 text-amber-200" />
             <span className="font-serif text-sm tracking-[0.22em]">STUDIO GHIBLI</span>
             <Sparkles className="h-4 w-4 text-amber-200" />
@@ -161,9 +165,9 @@ export const Home: React.FC = () => {
             </div>
           </div>
 
-          <div className="absolute bottom-8 left-1/2 flex -translate-x-1/2 flex-col items-center gap-4">
+          <div className="absolute bottom-8 left-1/2 z-10 flex -translate-x-1/2 flex-col items-center gap-4">
             <p className="font-serif text-sm text-white/60">
-              此刻的风来自《{currentMovie.title}》
+              此刻的旋律来自《{currentMovie.title}》
             </p>
             <div className="flex max-w-[80vw] items-center gap-2">
               {movies.map((movie, index) => (
@@ -172,18 +176,18 @@ export const Home: React.FC = () => {
                   type="button"
                   onClick={() => setCurrentIndex(index)}
                   className={`h-1.5 rounded-full transition-all ${index === currentIndex ? 'w-9 bg-white' : 'w-1.5 bg-white/35 hover:bg-white/60'}`}
-                  aria-label={`让风景切换到《${movie.title}》`}
+                  aria-label={`把今日旋律切换到《${movie.title}》`}
                 />
               ))}
             </div>
           </div>
 
-          <ChevronDown className="absolute bottom-2 h-5 w-5 animate-bounce text-white/45" />
+          <ChevronDown className="absolute bottom-2 z-10 h-5 w-5 animate-bounce text-white/45" />
         </section>
 
         <section className="relative isolate min-h-[62vh] overflow-hidden border-y border-white/15" aria-label="风的第一封来信">
-          <img src={windMovie.stills[1]} alt="" className="absolute inset-0 h-full w-full object-cover" />
-          <div className="absolute inset-0 bg-slate-950/55" />
+          <img src="/images/home-paper-plane.png" alt="" className="home-paper-plane-image absolute inset-0 h-full w-full object-cover" />
+          <div className="absolute inset-0 bg-[#5d5147]/32" />
           <div className="absolute inset-0 wind-route-vignette" />
           <div className="relative mx-auto flex min-h-[62vh] max-w-6xl items-center px-6 py-16 md:px-10">
             <div className="max-w-2xl">
@@ -209,7 +213,7 @@ export const Home: React.FC = () => {
 
         <section className="relative isolate min-h-[58vh] overflow-hidden border-b border-white/15" aria-label="哈尔的移动城堡隐藏入口">
           <img src={howlMovie.stills[0]} alt="" className="absolute inset-0 h-full w-full object-cover" />
-          <div className="absolute inset-0 bg-slate-950/45" />
+          <div className="absolute inset-0 bg-[#604c45]/28" />
           <div className="absolute inset-0 secret-door-entry-vignette" />
           <div className="secret-door-glow" aria-hidden="true" />
           <div className="relative mx-auto flex min-h-[58vh] max-w-6xl items-center justify-end px-6 py-16 md:px-10">
@@ -235,8 +239,8 @@ export const Home: React.FC = () => {
         </section>
 
         <section className="relative isolate min-h-[58vh] overflow-hidden border-b border-white/15" aria-label="千与千寻水上列车隐藏入口">
-          <img src={spiritMovie.stills[0]} alt="" className="absolute inset-0 h-full w-full object-cover" />
-          <div className="absolute inset-0 bg-[#102b3c]/55" />
+          <img src="/images/home-water-train-arrival.png" alt="" className="home-water-train-image absolute inset-0 h-full w-full object-cover" />
+          <div className="absolute inset-0 bg-[#46545b]/32" />
           <div className="absolute inset-0 water-entry-vignette" />
           <div className="water-entry-track" aria-hidden="true">
             <span />

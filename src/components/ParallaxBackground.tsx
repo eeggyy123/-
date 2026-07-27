@@ -6,19 +6,23 @@ interface ParallaxBackgroundProps {
   colors?: string[];
   image?: string;
   timePhase?: TimePhase;
+  backgroundClassName?: string;
+  containerClassName?: string;
 }
 
 export const ParallaxBackground: React.FC<ParallaxBackgroundProps> = ({
   colors = ['#87CEEB', '#98D8C8', '#F7DC6F'],
   image,
   timePhase = 'day',
+  backgroundClassName = '',
+  containerClassName = '',
 }) => {
   const { offsetX, offsetY } = useParallax(0.012);
 
   return (
-    <div className={`fixed inset-0 overflow-hidden pointer-events-none atmosphere-${timePhase}`}>
+    <div className={`fixed inset-0 overflow-hidden pointer-events-none atmosphere-${timePhase} ${containerClassName}`}>
       <div
-        className="absolute -inset-5 transition-[transform,opacity] duration-1000 ease-out"
+        className={`absolute -inset-5 transition-[transform,opacity] duration-1000 ease-out ${backgroundClassName}`}
         style={{
           backgroundColor: colors[0],
           backgroundImage: image
@@ -58,4 +62,3 @@ export const ParallaxBackground: React.FC<ParallaxBackgroundProps> = ({
     </div>
   );
 };
-
