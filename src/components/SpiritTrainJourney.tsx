@@ -34,7 +34,7 @@ export const SpiritTrainJourney: React.FC<SpiritTrainJourneyProps> = ({ movie })
           description: '妙子的回忆不会把你困住。返程列车会送你回到汤屋外的第六站台。',
           returnLabel: '返回千寻的第六站台',
           returnPath: '/movie/spirited-away',
-          returnAnchor: 'water-train',
+          returnAnchor: 'top',
         },
       } satisfies JourneyLocationState,
     }), 1500);

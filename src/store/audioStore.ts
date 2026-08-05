@@ -34,6 +34,13 @@ export const useAudioStore = create<AudioStore>((set) => ({
 let soundInstance: Howl | null = null;
 let progressInterval: number | null = null;
 
+const clearProgressInterval = () => {
+  if (progressInterval) {
+    clearInterval(progressInterval);
+    progressInterval = null;
+  }
+};
+
 export const audioManager = {
   play: (url: string, volume?: number) => {
     const store = useAudioStore.getState();
@@ -43,52 +50,58 @@ export const audioManager = {
       soundInstance.stop();
       soundInstance.unload();
     }
-    if (progressInterval) {
-      clearInterval(progressInterval);
-    }
+    clearProgressInterval();
 
-    soundInstance = new Howl({
+    const nextSound = new Howl({
       src: [url],
       html5: true,
       volume: vol,
       onplay: () => {
+        if (soundInstance !== nextSound) return;
         useAudioStore.getState().setIsPlaying(true);
         useAudioStore.getState().setCurrentUrl(url);
-        useAudioStore.getState().setDuration(soundInstance?.duration() || 0);
+        useAudioStore.getState().setDuration(nextSound.duration() || 0);
+        clearProgressInterval();
         
         progressInterval = window.setInterval(() => {
-          if (soundInstance && soundInstance.playing()) {
-            useAudioStore.getState().setCurrentTime(soundInstance.seek() as number);
+          if (soundInstance === nextSound && nextSound.playing()) {
+            useAudioStore.getState().setCurrentTime(nextSound.seek() as number);
           }
         }, 100);
       },
+      onplayerror: () => {
+        if (soundInstance !== nextSound) return;
+        useAudioStore.getState().setIsPlaying(false);
+        nextSound.once('unlock', () => {
+          if (soundInstance === nextSound && !nextSound.playing()) {
+            nextSound.play();
+          }
+        });
+      },
       onpause: () => {
         useAudioStore.getState().setIsPlaying(false);
-        if (progressInterval) {
-          clearInterval(progressInterval);
-        }
+        clearProgressInterval();
       },
       onstop: () => {
         useAudioStore.getState().setIsPlaying(false);
         useAudioStore.getState().setCurrentTime(0);
-        if (progressInterval) {
-          clearInterval(progressInterval);
-        }
+        clearProgressInterval();
       },
       onend: () => {
         useAudioStore.getState().setIsPlaying(false);
         useAudioStore.getState().setCurrentTime(0);
-        if (progressInterval) {
-          clearInterval(progressInterval);
-        }
+        clearProgressInterval();
       },
       onload: () => {
-        useAudioStore.getState().setDuration(soundInstance?.duration() || 0);
+        if (soundInstance === nextSound) {
+          useAudioStore.getState().setDuration(nextSound.duration() || 0);
+        }
       },
     });
 
-    useAudioStore.getState().setSound(soundInstance);
-    soundInstance.play();
+    soundInstance = nextSound;
+    useAudioStore.getState().setSound(nextSound);
+    nextSound.play();
   },
 
   pause: () => {
@@ -107,15 +120,13 @@ export const audioManager = {
     if (soundInstance) {
       soundInstance.stop();
     }
-    if (progressInterval) {
-      clearInterval(progressInterval);
-    }
+    clearProgressInterval();
   },
 
   fadeOut: (duration: number) => {
     if (!soundInstance) return;
-    const store = useAudioStore.getState();
-    const startVolume = store.volume;
+    const fadingSound = soundInstance;
+    const startVolume = fadingSound.volume() as number;
     const startTime = Date.now();
 
     const fade = () => {
@@ -123,13 +134,13 @@ export const audioManager = {
       const progress = Math.min(elapsed / duration, 1);
       const newVolume = startVolume * (1 - progress);
 
-      soundInstance?.volume(newVolume);
+      fadingSound.volume(newVolume);
 
       if (progress < 1) {
         requestAnimationFrame(fade);
       } else {
-        soundInstance?.stop();
-        soundInstance?.volume(startVolume);
+        fadingSound.stop();
+        fadingSound.volume(startVolume);
       }
     };
 

@@ -70,7 +70,19 @@ export const MovieCard: React.FC<MovieCardProps> = ({ movie, isActive = false, o
     sessionStorage.setItem('scrollPosition', window.scrollY.toString());
     cardRef.current?.style.setProperty('view-transition-name', 'movie-poster');
     navigateWithWind(() => navigate(`/movie/${movie.id}`, {
-      state: { scrollTo: 'top' } satisfies JourneyLocationState,
+      state: {
+        scrollTo: 'top',
+        passage: {
+          id: `home-movie-card-${movie.id}`,
+          kind: 'home',
+          eyebrow: '十三个世界仍在原处等待',
+          title: `《${movie.title}》身后，主页还留着你刚才浏览的位置`,
+          description: '看完这部电影，风会把你送回电影列表，继续挑选下一段旅程。',
+          returnLabel: '回到十三个电影世界',
+          returnPath: '/',
+          returnAnchor: 'movies',
+        },
+      } satisfies JourneyLocationState,
     }));
   };
 

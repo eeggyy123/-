@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, House, Play, Pause, Volume2, ChevronLeft, ChevronRight, Calendar, User, Music, Star } from 'lucide-react';
-import { getMovieById } from '../data/movies';
+import { House, Play, Pause, Volume2, ChevronLeft, ChevronRight, Calendar, User, Music, Star } from 'lucide-react';
+import { getMovieById, Movie } from '../data/movies';
 import { ParallaxBackground } from '../components/ParallaxBackground';
 import { MovieInteractiveContent } from '../components/MovieInteractiveContent';
 import { VideoSection } from '../components/VideoSection';
@@ -9,12 +9,72 @@ import { WindRoutePortal } from '../components/WindRoutePortal';
 import { HowlMagicDoor } from '../components/HowlMagicDoor';
 import { SpiritTrainJourney } from '../components/SpiritTrainJourney';
 import { ReturnPassage } from '../components/ReturnPassage';
+import { MovieDayImmersion } from '../components/MovieDayImmersion';
+import { MovieQuotes } from '../components/MovieQuotes';
 import { useAudioStore, audioManager } from '../store/audioStore';
 import { useAppStore } from '../store/appStore';
 import { useJourneyStore } from '../store/journeyStore';
 import { useTimeAtmosphere } from '../hooks/useTimeAtmosphere';
 import { navigateWithWind } from '../lib/viewTransition';
-import { JourneyLocationState } from '../lib/journeyNavigation';
+import { JourneyLocationState, JourneyPassage } from '../lib/journeyNavigation';
+
+const getDefaultReturnPassage = (movie: Movie): JourneyPassage => {
+  const routeTargets: Record<string, Pick<JourneyPassage, 'kind' | 'returnAnchor' | 'returnLabel' | 'returnPath'>> = {
+    'the-wind-rises': {
+      kind: 'home',
+      returnPath: '/',
+      returnAnchor: 'wind-letter',
+      returnLabel: '回到纸飞机起飞处',
+    },
+    'porco-rosso': {
+      kind: 'wind-route',
+      returnPath: '/movie/the-wind-rises',
+      returnAnchor: 'top',
+      returnLabel: '返回《起风了》的航线',
+    },
+    'castle-in-the-sky': {
+      kind: 'wind-route',
+      returnPath: '/movie/porco-rosso',
+      returnAnchor: 'top',
+      returnLabel: '返回《红猪》的航线',
+    },
+    'howls-moving-castle': {
+      kind: 'home',
+      returnPath: '/',
+      returnAnchor: 'howl-door-entry',
+      returnLabel: '回到移动城堡入口',
+    },
+    'spirited-away': {
+      kind: 'home',
+      returnPath: '/',
+      returnAnchor: 'water-train-entry',
+      returnLabel: '回到第六站台入口',
+    },
+    'only-yesterday': {
+      kind: 'water-train',
+      returnPath: '/movie/spirited-away',
+      returnAnchor: 'top',
+      returnLabel: '返回千寻的第六站台',
+    },
+  };
+  const target = routeTargets[movie.id] || {
+    kind: 'home' as const,
+    returnPath: '/',
+    returnAnchor: 'movies',
+    returnLabel: '回到十三个电影世界',
+  };
+
+  return {
+    id: `default-return-${movie.id}`,
+    kind: target.kind,
+    eyebrow: '旅程的上一页仍替你保留',
+    title: `看完《${movie.title}》，沿来路继续未完成的探索`,
+    description: '返程入口留在页面最下方。浏览完这一页，再回到刚才经过的电影或主页入口。',
+    returnLabel: target.returnLabel,
+    returnPath: target.returnPath,
+    returnAnchor: target.returnAnchor,
+  };
+};
 
 export const MovieDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -23,11 +83,19 @@ export const MovieDetail: React.FC = () => {
   const [currentStillIndex, setCurrentStillIndex] = useState(0);
   const { isPlaying, currentTime, duration, volume } = useAudioStore();
   const { setCurrentMovie, setShowAudioPlayer } = useAppStore();
-  const { markMovieVisited, markPassageReturned, unlockDiscovery } = useJourneyStore();
+  const { markMovieVisited } = useJourneyStore();
   const { phase } = useTimeAtmosphere();
 
   const movie = getMovieById(id || '');
   const navigationState = location.state as JourneyLocationState | null;
+
+  useEffect(() => {
+    const previousScrollRestoration = window.history.scrollRestoration;
+    window.history.scrollRestoration = 'manual';
+    return () => {
+      window.history.scrollRestoration = previousScrollRestoration;
+    };
+  }, []);
 
   useLayoutEffect(() => {
     if (!movie) return;
@@ -37,8 +105,13 @@ export const MovieDetail: React.FC = () => {
     root.style.scrollBehavior = 'auto';
 
     const scrollToDestination = () => {
-      if (navigationState?.scrollTo && navigationState.scrollTo !== 'top') {
-        const target = document.getElementById(navigationState.scrollTo);
+      const requestedDestination = navigationState?.scrollTo;
+      const shouldStartAtTop = !requestedDestination
+        || requestedDestination === 'top'
+        || ['wind-route', 'water-train'].includes(requestedDestination);
+
+      if (!shouldStartAtTop && requestedDestination) {
+        const target = document.getElementById(requestedDestination);
         if (target) {
           target.scrollIntoView({ behavior: 'auto', block: 'start' });
           return;
@@ -114,19 +187,10 @@ export const MovieDetail: React.FC = () => {
   };
 
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
-
-  const handleBack = () => {
-    const passage = navigationState?.passage;
-    if (passage) {
-      markPassageReturned(passage.id);
-      unlockDiscovery('return-thread');
-    }
-    navigateWithWind(() => navigate(passage?.returnPath || '/', {
-      state: passage
-        ? ({ scrollTo: passage.returnAnchor } satisfies JourneyLocationState)
-        : undefined,
-    }));
-  };
+  const fallbackPassage = getDefaultReturnPassage(movie);
+  const detailBackgroundImage = movie.id === 'spirited-away'
+    ? movie.stills[currentStillIndex] || movie.cover
+    : movie.background || movie.stills[currentStillIndex] || movie.cover;
 
   const handleHome = () => {
     navigateWithWind(() => navigate('/'));
@@ -136,23 +200,12 @@ export const MovieDetail: React.FC = () => {
     <div className="min-h-screen relative page-cinematic-enter">
       <ParallaxBackground
         colors={movie.colorTheme}
-        image={movie.stills[currentStillIndex] || movie.cover}
+        image={detailBackgroundImage}
         timePhase={phase}
       />
 
       <div className="relative z-10">
         <nav className="fixed left-5 top-5 z-[150] flex items-center gap-2" aria-label="电影世界导航">
-          {navigationState?.passage && (
-            <button
-              type="button"
-              onClick={handleBack}
-              className="glass-effect flex h-12 w-12 items-center justify-center rounded-lg text-white transition-all hover:scale-105 hover:bg-white/20"
-              aria-label="沿来路返回"
-              title="沿来路返回"
-            >
-              <ArrowLeft className="h-6 w-6" />
-            </button>
-          )}
           <button
             type="button"
             onClick={handleHome}
@@ -163,8 +216,6 @@ export const MovieDetail: React.FC = () => {
             <House className="h-5 w-5" />
           </button>
         </nav>
-
-        <ReturnPassage />
 
         <section className="relative h-[60vh] md:h-[70vh] overflow-hidden">
           <img
@@ -238,8 +289,7 @@ export const MovieDetail: React.FC = () => {
         </section>
 
         <section id="movie-details" className="scroll-mt-4 py-12 px-4 md:px-10 lg:px-20">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2 space-y-8">
+          <div className="mx-auto max-w-6xl space-y-8">
               <div className="glass-effect rounded-3xl p-6 md:p-8">
                 <h2 className="font-serif text-2xl md:text-3xl font-bold text-white mb-6 flex items-center gap-3">
                   <Star className="w-6 h-6 text-ghibli-sunset" />
@@ -251,6 +301,8 @@ export const MovieDetail: React.FC = () => {
               </div>
 
               <MovieInteractiveContent movie={movie} />
+
+              <MovieQuotes movie={movie} />
 
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {movie.stills.map((still, index) => (
@@ -273,28 +325,25 @@ export const MovieDetail: React.FC = () => {
                 ))}
               </div>
 
-              <VideoSection movie={movie} />
-            </div>
-
-            <div className="space-y-6">
-              <div className="glass-effect rounded-3xl p-6">
-                <img
-                  src={movie.cover}
-                  alt={movie.title}
-                  className="w-full aspect-[3/4] object-cover rounded-2xl mb-6"
-                />
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-serif text-lg font-semibold text-white">
-                      {movie.soundtrackName}
-                    </h3>
-                    <p className="text-white/60 text-sm font-cursive">
-                      {movie.composer}
-                    </p>
-                  </div>
+              <div className="mx-auto max-w-2xl space-y-5">
+                <figure className="glass-effect relative overflow-hidden rounded-3xl p-4 md:p-6" aria-label={`${movie.title}电影海报`}>
+                  <div className="relative mx-auto overflow-hidden rounded-2xl">
+                    <img
+                      src={movie.cover}
+                      alt={`${movie.title}海报`}
+                      className="aspect-[3/4] w-full object-cover"
+                    />
+                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent" />
+                    <figcaption className="absolute bottom-5 left-5 right-24 text-white md:bottom-7 md:left-7">
+                      <p className="mb-2 text-xs text-white/55">原声留声机</p>
+                      <h3 className="font-serif text-2xl font-semibold md:text-3xl">{movie.soundtrackName}</h3>
+                      <p className="mt-1 font-cursive text-sm text-white/65">{movie.composer}</p>
+                    </figcaption>
                   <button
+                    type="button"
                     onClick={handleTogglePlay}
-                    className={`w-14 h-14 rounded-full flex items-center justify-center transition-all hover:scale-110 ${
+                    aria-label={isPlaying ? '暂停电影配乐' : '播放电影配乐'}
+                    className={`absolute bottom-5 right-5 flex h-14 w-14 items-center justify-center rounded-full transition-all hover:scale-110 md:bottom-7 md:right-7 md:h-16 md:w-16 ${
                       isPlaying
                         ? 'bg-ghibli-sunset text-white'
                         : 'bg-white/20 text-white hover:bg-white/30'
@@ -306,84 +355,91 @@ export const MovieDetail: React.FC = () => {
                       <Play className="w-7 h-7 ml-1" />
                     )}
                   </button>
-                </div>
-              </div>
+                  </div>
+                </figure>
 
-              <div className="glass-effect rounded-3xl p-6">
-                <h4 className="font-serif text-lg font-semibold text-white mb-4">
-                  配乐播放
-                </h4>
-                <div className="space-y-4">
-                  <div className="h-2 bg-white/20 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-gradient-to-r from-ghibli-sunset to-ghibli-warm rounded-full transition-all duration-100"
-                      style={{ width: `${progress}%` }}
-                    />
-                  </div>
-                  <div className="flex justify-between text-white/60 text-sm">
-                    <span>{formatTime(currentTime)}</span>
-                    <span>{formatTime(duration)}</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Volume2 className="w-5 h-5 text-white/60" />
-                    <input
-                      type="range"
-                      min="0"
-                      max="1"
-                      step="0.1"
-                      value={volume}
-                      onChange={(e) => audioManager.setVolume(parseFloat(e.target.value))}
-                      className="flex-1 h-1 bg-white/20 rounded-full appearance-none cursor-pointer
-                        [&::-webkit-slider-thumb]:appearance-none
-                        [&::-webkit-slider-thumb]:w-3
-                        [&::-webkit-slider-thumb]:h-3
-                        [&::-webkit-slider-thumb]:rounded-full
-                        [&::-webkit-slider-thumb]:bg-white
-                        [&::-webkit-slider-thumb]:shadow-md"
-                    />
-                  </div>
-                  <div className="flex items-end justify-center gap-1 h-6">
-                    {[...Array(15)].map((_, i) => (
+                <section className="glass-effect rounded-3xl p-6 md:p-8" aria-labelledby="soundtrack-progress-title">
+                  <h4 id="soundtrack-progress-title" className="font-serif text-lg font-semibold text-white mb-4">
+                    配乐播放
+                  </h4>
+                  <div className="space-y-4">
+                    <div className="h-2 bg-white/20 rounded-full overflow-hidden">
                       <div
-                        key={i}
-                        className="w-1 bg-white/40 rounded-full music-wave-bar"
-                        style={{
-                          height: `${Math.random() * 80 + 20}%`,
-                          animationDelay: `${i * 0.05}s`,
-                          animationPlayState: isPlaying ? 'running' : 'paused',
-                        }}
+                        className="h-full bg-gradient-to-r from-ghibli-sunset to-ghibli-warm rounded-full transition-all duration-100"
+                        style={{ width: `${progress}%` }}
                       />
-                    ))}
+                    </div>
+                    <div className="flex justify-between text-white/60 text-sm">
+                      <span>{formatTime(currentTime)}</span>
+                      <span>{formatTime(duration)}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Volume2 className="w-5 h-5 text-white/60" />
+                      <input
+                        type="range"
+                        min="0"
+                        max="1"
+                        step="0.1"
+                        value={volume}
+                        aria-label="配乐音量"
+                        onChange={(e) => audioManager.setVolume(parseFloat(e.target.value))}
+                        className="flex-1 h-1 bg-white/20 rounded-full appearance-none cursor-pointer
+                          [&::-webkit-slider-thumb]:appearance-none
+                          [&::-webkit-slider-thumb]:w-3
+                          [&::-webkit-slider-thumb]:h-3
+                          [&::-webkit-slider-thumb]:rounded-full
+                          [&::-webkit-slider-thumb]:bg-white
+                          [&::-webkit-slider-thumb]:shadow-md"
+                      />
+                    </div>
+                    <div className="flex items-end justify-center gap-1 h-6">
+                      {[...Array(15)].map((_, i) => (
+                        <div
+                          key={i}
+                          className="w-1 bg-white/40 rounded-full music-wave-bar"
+                          style={{
+                            height: `${22 + ((i * 37) % 68)}%`,
+                            animationDelay: `${i * 0.05}s`,
+                            animationPlayState: isPlaying ? 'running' : 'paused',
+                          }}
+                        />
+                      ))}
+                    </div>
                   </div>
-                </div>
-              </div>
+                </section>
 
-              <div className="glass-effect rounded-3xl p-6">
-                <h4 className="font-serif text-lg font-semibold text-white mb-4">
-                  电影信息
-                </h4>
-                <div className="space-y-3 text-white/80">
-                  <div className="flex justify-between">
-                    <span className="text-white/60">导演</span>
-                    <span className="font-serif">{movie.director}</span>
+                <section className="glass-effect rounded-3xl p-6 md:p-8" aria-labelledby="movie-information-title">
+                  <h4 id="movie-information-title" className="font-serif text-lg font-semibold text-white mb-5">
+                    电影信息
+                  </h4>
+                  <div className="grid gap-5 text-white/80 sm:grid-cols-3">
+                    <div className="flex justify-between gap-4 sm:block">
+                      <span className="text-white/60">导演</span>
+                      <p className="font-serif sm:mt-2">{movie.director}</p>
+                    </div>
+                    <div className="flex justify-between gap-4 sm:block">
+                      <span className="text-white/60">配乐</span>
+                      <p className="font-serif sm:mt-2">{movie.composer}</p>
+                    </div>
+                    <div className="flex justify-between gap-4 sm:block">
+                      <span className="text-white/60">年份</span>
+                      <p className="font-serif sm:mt-2">{movie.year}</p>
+                    </div>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-white/60">配乐</span>
-                    <span className="font-serif">{movie.composer}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-white/60">年份</span>
-                    <span className="font-serif">{movie.year}</span>
-                  </div>
+                </section>
                 </div>
-              </div>
-            </div>
+
+              <VideoSection movie={movie} />
           </div>
         </section>
+
+        <MovieDayImmersion movie={movie} />
 
         <WindRoutePortal key={`wind-route-${movie.id}`} movie={movie} />
         <HowlMagicDoor key={`magic-door-${movie.id}`} movie={movie} />
         <SpiritTrainJourney key={`water-train-${movie.id}`} movie={movie} />
+
+        <ReturnPassage fallbackPassage={fallbackPassage} />
 
         <footer className="py-8 px-4 text-center">
           <p className="text-white/40 text-xs">

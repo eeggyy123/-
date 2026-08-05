@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, ArrowRight, Check, Plane, Wind } from 'lucide-react';
+import { ArrowRight, Check, Plane, Wind } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { DiscoveryId, windRouteDiscoveryIds } from '../data/journey';
 import { getMovieById, Movie } from '../data/movies';
@@ -17,7 +17,6 @@ interface RouteChapter {
   story: string;
   action: string;
   nextMovieId: string;
-  previousMovieId?: string;
 }
 
 const chapters: Record<string, RouteChapter> = {
@@ -36,7 +35,6 @@ const chapters: Record<string, RouteChapter> = {
     story: '波鲁克看了一眼云层，把纸飞机放进驾驶舱。更高的地方，有一座被遗忘的城。',
     action: '穿过亚得里亚海的云',
     nextMovieId: 'castle-in-the-sky',
-    previousMovieId: 'the-wind-rises',
   },
   'castle-in-the-sky': {
     discoveryId: 'sky-letter',
@@ -45,7 +43,6 @@ const chapters: Record<string, RouteChapter> = {
     story: '它没有写收件人的名字，却在云海尽头找到了归处。风把回信交给了你。',
     action: '把回信带回旅程起点',
     nextMovieId: 'the-wind-rises',
-    previousMovieId: 'porco-rosso',
   },
 };
 
@@ -69,32 +66,32 @@ export const WindRoutePortal: React.FC<WindRoutePortalProps> = ({ movie }) => {
   const routeProgress = windRouteDiscoveryIds.filter((id) => discoveries.includes(id)).length;
   const isFound = discoveries.includes(chapter.discoveryId);
 
-  const travelTo = (destinationMovieId: string, direction: 'forward' | 'backward') => {
+  const travelTo = (destinationMovieId: string) => {
     if (isDeparting) return;
-    if (direction === 'forward') unlockDiscovery(chapter.discoveryId);
-    if (movie.id === 'castle-in-the-sky' && direction === 'forward') completeRoute('wind-route');
+    unlockDiscovery(chapter.discoveryId);
+    if (movie.id === 'castle-in-the-sky') completeRoute('wind-route');
     setIsDeparting(true);
 
     window.setTimeout(() => {
       navigate(`/movie/${destinationMovieId}`, {
         state: {
-          scrollTo: 'wind-route',
+          scrollTo: 'top',
           passage: {
             id: `wind-route-${movie.id}-${destinationMovieId}`,
             kind: 'wind-route',
-            eyebrow: direction === 'forward' ? '逆风也记得来路' : '顺风仍可折返',
+            eyebrow: '逆风也记得来路',
             title: `风把通往《${movie.title}》的航线留在身后`,
             description: '如果还想回去，纸飞机会沿着刚才的云层，把你送回上一段故事。',
             returnLabel: `返回《${movie.title}》的航线`,
             returnPath: `/movie/${movie.id}`,
-            returnAnchor: 'wind-route',
+            returnAnchor: 'top',
           },
         } satisfies JourneyLocationState,
       });
     }, 1050);
   };
 
-  const handleDeparture = () => travelTo(chapter.nextMovieId, 'forward');
+  const handleDeparture = () => travelTo(chapter.nextMovieId);
 
   return (
     <section id="wind-route" className="relative isolate min-h-[72vh] scroll-mt-4 overflow-hidden border-y border-white/15" aria-label="风的航线">
@@ -125,16 +122,6 @@ export const WindRoutePortal: React.FC<WindRoutePortalProps> = ({ movie }) => {
               <span>{chapter.action}</span>
               <ArrowRight className="h-4 w-4" />
             </button>
-            {chapter.previousMovieId && (
-              <button
-                type="button"
-                onClick={() => travelTo(chapter.previousMovieId!, 'backward')}
-                className="inline-flex min-h-12 items-center gap-3 rounded-lg border border-white/25 bg-slate-950/30 px-5 py-3 font-semibold text-white backdrop-blur-md transition hover:bg-white hover:text-slate-900"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                <span>沿来时的风返回</span>
-              </button>
-            )}
             <span className="text-sm text-white/50">航线 {Math.max(routeProgress, isFound ? 1 : 0)} / 3</span>
           </div>
         </div>

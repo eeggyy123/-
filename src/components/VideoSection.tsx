@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Play, Pause, Volume2, VolumeX, Maximize, X, ExternalLink, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Movie } from '../data/movies';
+import { audioManager, useAudioStore } from '../store/audioStore';
 
 interface Video {
   id: string;
@@ -83,12 +84,31 @@ export const VideoSection: React.FC<VideoSectionProps> = ({ movie }) => {
   const [isMuted, setIsMuted] = useState(false);
   const [showAddVideo, setShowAddVideo] = useState(false);
   const [videos, setVideos] = useState<Video[]>(defaultVideos);
+  const soundtrackWasPlayingRef = useRef(false);
+  const soundtrackPausedForVideoRef = useRef(false);
 
   const filteredVideos = movie 
     ? videos.filter(v => v.movieId === movie.id) 
     : videos;
 
+  const pauseSoundtrackForVideo = () => {
+    if (!soundtrackPausedForVideoRef.current) {
+      soundtrackWasPlayingRef.current = useAudioStore.getState().isPlaying;
+    }
+    if (useAudioStore.getState().isPlaying) audioManager.pause();
+    soundtrackPausedForVideoRef.current = true;
+  };
+
+  const restoreSoundtrack = () => {
+    if (soundtrackPausedForVideoRef.current && soundtrackWasPlayingRef.current) {
+      audioManager.resume();
+    }
+    soundtrackPausedForVideoRef.current = false;
+    soundtrackWasPlayingRef.current = false;
+  };
+
   const handleVideoClick = (video: Video) => {
+    pauseSoundtrackForVideo();
     setSelectedVideo(video);
     setIsPlaying(true);
   };
@@ -122,6 +142,7 @@ export const VideoSection: React.FC<VideoSectionProps> = ({ movie }) => {
   };
 
   const handleClose = () => {
+    restoreSoundtrack();
     setSelectedVideo(null);
     setIsPlaying(false);
   };
@@ -243,7 +264,7 @@ export const VideoSection: React.FC<VideoSectionProps> = ({ movie }) => {
         </form>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className={`grid gap-4 ${movie ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'}`}>
         {filteredVideos.map((video) => (
           <div
             key={video.id}
@@ -273,7 +294,7 @@ export const VideoSection: React.FC<VideoSectionProps> = ({ movie }) => {
 
       {selectedVideo && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[200] animate-fade-in" onClick={handleClose}>
-          <div className="w-full max-w-4xl mx-4 aspect-video rounded-2xl overflow-hidden relative" onClick={(e) => e.stopPropagation()}>
+          <div className="relative aspect-video w-[min(94vw,90rem)] max-h-[88vh] overflow-hidden rounded-2xl shadow-2xl" onClick={(e) => e.stopPropagation()}>
             {selectedVideo.source === 'local' ? (
               <video
                 key={selectedVideo.url}
@@ -282,13 +303,15 @@ export const VideoSection: React.FC<VideoSectionProps> = ({ movie }) => {
                 className="w-full h-full bg-black object-contain"
                 controls
                 autoPlay
+                onPlay={pauseSoundtrackForVideo}
+                onEnded={restoreSoundtrack}
               >
                 你的浏览器不支持 HTML5 视频播放。
               </video>
             ) : (
               <>
                 <iframe
-                  src={selectedVideo.url}
+                  src={`${selectedVideo.url}${selectedVideo.url.includes('?') ? '&' : '?'}autoplay=1`}
                   title={selectedVideo.title}
                   className="w-full h-full"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -300,6 +323,7 @@ export const VideoSection: React.FC<VideoSectionProps> = ({ movie }) => {
             
             <button
               onClick={handleClose}
+              aria-label="关闭视频"
               className="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/50 flex items-center justify-center text-white hover:bg-black/70 transition-colors"
             >
               <X className="w-5 h-5" />

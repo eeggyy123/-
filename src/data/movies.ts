@@ -6,6 +6,7 @@ export interface Movie {
   director: string;
   composer: string;
   cover: string;
+  background?: string;
   synopsis: string;
   soundtrack: string;
   soundtrackName: string;
@@ -50,14 +51,17 @@ export const movies: Movie[] = [
     year: 1986,
     director: '宫崎骏',
     composer: '久石让',
-    cover: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Castle%20in%20the%20Sky%20anime%20movie%20poster%20with%20floating%20castle%20Laputa%20in%20a%20dreamy%20sky%20with%20clouds%20and%20fantasy%20elements%20Studio%20Ghibli%20style%20watercolor&image_size=portrait_4_3',
+    cover: '/images/local/天空之城/图片13.webp',
+    background: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Castle%20in%20the%20Sky%20anime%20scene%20with%20floating%20islands%20and%20fantasy%20landscape%20Studio%20Ghibli%20watercolor%20style&image_size=landscape_16_9',
     synopsis: '故事讲述了一个名叫巴斯的男孩和一个名叫希达的女孩，为了寻找传说中的天空之城拉普达而展开的冒险。他们必须对抗海盗和军队的追击，同时揭开拉普达的秘密。',
     soundtrack: '/music/castle-in-the-sky.mp3',
     soundtrackName: '天空之城',
     stills: [
-      'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Castle%20in%20the%20Sky%20anime%20scene%20with%20floating%20islands%20and%20fantasy%20landscape%20Studio%20Ghibli%20watercolor%20style&image_size=landscape_16_9',
-      'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Castle%20in%20the%20Sky%20anime%20scene%20with%20robot%20guardian%20in%20a%20mysterious%20garden%20Studio%20Ghibli%20style&image_size=landscape_16_9',
-      'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Castle%20in%20the%20Sky%20anime%20scene%20with%20airship%20flying%20through%20clouds%20Studio%20Ghibli%20watercolor&image_size=landscape_16_9'
+      '/images/local/天空之城/图片2.png',
+      '/images/local/天空之城/图片3.png',
+      '/images/local/天空之城/图片10.webp',
+      '/images/local/天空之城/图片12.webp',
+      '/images/local/天空之城/图片14.jpg'
     ],
     colorTheme: ['#87CEEB', '#98D8C8', '#2ECC71'],
     trivia: [
@@ -83,7 +87,9 @@ export const movies: Movie[] = [
     stills: [
       'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=My%20Neighbor%20Totoro%20anime%20scene%20with%20totoro%20sleeping%20in%20a%20tree%20with%20fireflies%20Studio%20Ghibli%20watercolor&image_size=landscape_16_9',
       'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=My%20Neighbor%20Totoro%20anime%20scene%20with%20catbus%20running%20through%20forest%20at%20night%20Studio%20Ghibli%20style&image_size=landscape_16_9',
-      'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=My%20Neighbor%20Totoro%20anime%20scene%20with%20two%20little%20girls%20in%20a%20sunny%20forest%20Studio%20Ghibli%20watercolor&image_size=landscape_16_9'
+      'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=My%20Neighbor%20Totoro%20anime%20scene%20with%20two%20little%20girls%20in%20a%20sunny%20forest%20Studio%20Ghibli%20watercolor&image_size=landscape_16_9',
+      '/images/local/龙猫/图片2.png',
+      '/images/local/龙猫/图片1.png'
     ],
     colorTheme: ['#98D8C8', '#2ECC71', '#F7DC6F'],
     trivia: [
@@ -154,7 +160,7 @@ export const movies: Movie[] = [
     year: 1997,
     director: '宫崎骏',
     composer: '久石让',
-    cover: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Princess%20Mononoke%20anime%20movie%20poster%20with%20wolf%20princess%20and%20forest%20spirits%20in%20a%20mysterious%20forest%20Studio%20Ghibli%20style&image_size=portrait_4_3',
+    cover: '/images/local/森林公主/图片1.png',
     synopsis: '阿席达卡为了保护村庄，杀死了一只被诅咒的野猪神，自己也中了诅咒。为了寻找解除诅咒的方法，他来到了森林深处，卷入了人类与自然之间的战争，结识了被狼群养大的少女珊。',
     soundtrack: '/music/summer.mp3',
     soundtrackName: '那个夏天',
@@ -180,14 +186,17 @@ export const movies: Movie[] = [
     year: 2001,
     director: '宫崎骏',
     composer: '久石让',
-    cover: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Spirited%20Away%20anime%20movie%20poster%20with%20Chihiro%20in%20a%20bathhouse%20with%20fantasy%20creatures%20and%20No%20Face%20Studio%20Ghibli%20style&image_size=portrait_4_3',
+    cover: '/images/local/千与千寻/图片3.png',
+    background: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Spirited%20Away%20anime%20scene%20with%20Chihiro%20and%20Haku%20flying%20over%20bathhouse%20Studio%20Ghibli%20watercolor&image_size=landscape_16_9',
     synopsis: '10岁的少女千寻与父母一起搬家，途中误入神灵世界。父母因贪吃变成了猪，千寻必须在汤屋工作来拯救他们。在这个过程中，她经历了成长和蜕变。',
     soundtrack: '/music/spirited-away.mp3',
     soundtrackName: '千与千寻',
     stills: [
-      'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Spirited%20Away%20anime%20scene%20with%20Chihiro%20and%20Haku%20flying%20over%20bathhouse%20Studio%20Ghibli%20watercolor&image_size=landscape_16_9',
-      'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Spirited%20Away%20anime%20scene%20with%20No%20Face%20in%20a%20golden%20room%20Studio%20Ghibli%20style&image_size=landscape_16_9',
-      'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Spirited%20Away%20anime%20scene%20with%20bathhouse%20interior%20with%20spirits%20Studio%20Ghibli%20watercolor&image_size=landscape_16_9'
+      '/images/local/千与千寻/图片4.png',
+      '/images/local/千与千寻/图片2.png',
+      '/images/local/千与千寻/图片6.png',
+      '/images/local/千与千寻/图片1.png',
+      '/images/local/千与千寻/图片5.png'
     ],
     colorTheme: ['#D7BDE2', '#F7DC6F', '#E74C3C'],
     trivia: [
@@ -211,9 +220,11 @@ export const movies: Movie[] = [
     soundtrack: '/music/howls-moving-castle.mp3',
     soundtrackName: '人生的旋转木马',
     stills: [
-      'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Howls%20Moving%20Castle%20anime%20scene%20with%20walking%20castle%20moving%20through%20a%20flower%20field%20Studio%20Ghibli%20watercolor&image_size=landscape_16_9',
-      'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Howls%20Moving%20Castle%20anime%20scene%20with%20Howl%20and%20Sophie%20flying%20together%20Studio%20Ghibli%20style&image_size=landscape_16_9',
-      'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Howls%20Moving%20Castle%20anime%20scene%20with%20fire%20demon%20Calcifer%20in%20the%20castle%20hearth%20Studio%20Ghibli%20watercolor&image_size=landscape_16_9'
+      '/images/local/哈尔的移动城堡/图片12.jpg',
+      '/images/local/哈尔的移动城堡/图片1.png',
+      '/images/local/哈尔的移动城堡/图片2.png',
+      '/images/local/哈尔的移动城堡/图片4.png',
+      '/images/local/哈尔的移动城堡/图片7.png'
     ],
     colorTheme: ['#BB8FCE', '#F7DC6F', '#87CEEB'],
     trivia: [
@@ -239,7 +250,10 @@ export const movies: Movie[] = [
     stills: [
       'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Ponyo%20anime%20scene%20with%20goldfish%20girl%20swimming%20in%20clear%20blue%20ocean%20Studio%20Ghibli%20watercolor&image_size=landscape_16_9',
       'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Ponyo%20anime%20scene%20with%20little%20boy%20and%20girl%20on%20a%20boat%20in%20a%20storm%20Studio%20Ghibli%20style&image_size=landscape_16_9',
-      'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Ponyo%20anime%20scene%20with%20underwater%20world%20with%20colorful%20fish%20Studio%20Ghibli%20watercolor&image_size=landscape_16_9'
+      'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Ponyo%20anime%20scene%20with%20underwater%20world%20with%20colorful%20fish%20Studio%20Ghibli%20watercolor&image_size=landscape_16_9',
+      '/images/local/悬崖上的金鱼公主/图片14.png',
+      '/images/local/悬崖上的金鱼公主/图片15.png',
+      '/images/local/悬崖上的金鱼公主/图片13.png'
     ],
     colorTheme: ['#3498DB', '#E74C3C', '#F7DC6F'],
     trivia: [
@@ -258,14 +272,15 @@ export const movies: Movie[] = [
     year: 2013,
     director: '宫崎骏',
     composer: '久石让',
-    cover: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=The%20Wind%20Rises%20anime%20movie%20poster%20with%20vintage%20airplane%20flying%20through%20clouds%20with%20romantic%20sky%20Studio%20Ghibli%20style&image_size=portrait_4_3',
+    cover: '/images/local/起风了/图片4.png',
+    background: '/images/local/起风了/图片1.png',
     synopsis: '影片讲述了日本著名飞机设计师堀越二郎的生平故事。他从小就梦想设计出美丽的飞机，长大后成为了一名航空工程师，设计出了著名的零式战斗机。同时，他与患有肺结核的菜穗子之间也展开了一段凄美动人的爱情故事。',
     soundtrack: '/music/the-wind-rises.flac',
     soundtrackName: '起风了',
     stills: [
-      'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=The%20Wind%20Rises%20anime%20scene%20with%20vintage%20airplane%20flying%20over%20mountains%20Studio%20Ghibli%20watercolor&image_size=landscape_16_9',
-      'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=The%20Wind%20Rises%20anime%20scene%20with%20romantic%20couple%20in%20a%20countryside%20setting%20Studio%20Ghibli%20style&image_size=landscape_16_9',
-      'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=The%20Wind%20Rises%20anime%20scene%20with%20airplane%20factory%20and%20workers%20Studio%20Ghibli%20watercolor&image_size=landscape_16_9'
+      '/images/local/起风了/图片2.png',
+      '/images/local/起风了/图片3.png',
+      '/images/local/起风了/图片10.png'
     ],
     colorTheme: ['#87CEEB', '#F7DC6F', '#D4A574'],
     trivia: [

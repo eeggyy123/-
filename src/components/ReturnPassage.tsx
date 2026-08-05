@@ -1,11 +1,12 @@
 import React from 'react';
-import { ArrowLeft, Compass, DoorOpen, Map, Plane, TrainFront } from 'lucide-react';
+import { ArrowLeft, Compass, DoorOpen, House, Map, Plane, TrainFront } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { JourneyLocationState, PassageKind } from '../lib/journeyNavigation';
+import { JourneyLocationState, JourneyPassage, PassageKind } from '../lib/journeyNavigation';
 import { navigateWithWind } from '../lib/viewTransition';
 import { useJourneyStore } from '../store/journeyStore';
 
 const passageIcons: Record<PassageKind, React.ReactNode> = {
+  home: <House className="h-5 w-5" />,
   'magic-door': <DoorOpen className="h-5 w-5" />,
   'wind-route': <Plane className="h-5 w-5" />,
   'water-train': <TrainFront className="h-5 w-5" />,
@@ -13,20 +14,27 @@ const passageIcons: Record<PassageKind, React.ReactNode> = {
   'world-map': <Map className="h-5 w-5" />,
 };
 
-export const ReturnPassage: React.FC = () => {
+interface ReturnPassageProps {
+  fallbackPassage?: JourneyPassage;
+}
+
+export const ReturnPassage: React.FC<ReturnPassageProps> = ({ fallbackPassage }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { unlockDiscovery, markPassageReturned } = useJourneyStore();
   const navigationState = location.state as JourneyLocationState | null;
-  const passage = navigationState?.passage;
+  const passage = navigationState?.passage || fallbackPassage;
 
   if (!passage) return null;
 
   const handleReturn = () => {
     markPassageReturned(passage.id);
     unlockDiscovery('return-thread');
+    const returnAnchor = ['wind-route', 'water-train'].includes(passage.returnAnchor)
+      ? 'top'
+      : passage.returnAnchor;
     navigateWithWind(() => navigate(passage.returnPath, {
-      state: { scrollTo: passage.returnAnchor } satisfies JourneyLocationState,
+      state: { scrollTo: returnAnchor } satisfies JourneyLocationState,
     }));
   };
 

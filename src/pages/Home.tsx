@@ -14,6 +14,7 @@ import { useTimeAtmosphere } from '../hooks/useTimeAtmosphere';
 import { navigateWithWind } from '../lib/viewTransition';
 import { JourneyLocationState } from '../lib/journeyNavigation';
 import { WorldAtlas } from '../components/WorldAtlas';
+import { SummerCinema } from '../components/SummerCinema';
 
 export const Home: React.FC = () => {
   const navigate = useNavigate();
@@ -52,14 +53,26 @@ export const Home: React.FC = () => {
     unlockDiscovery('first-breeze');
   }, [currentMovie, setCurrentMovie, setShowAudioPlayer, unlockDiscovery]);
 
-  const enterMovieWorld = (movieId: string) => {
+  const enterMovieWorld = (movieId: string, returnAnchor: string, returnLabel: string) => {
     sessionStorage.setItem('scrollPosition', window.scrollY.toString());
     navigateWithWind(() => navigate(`/movie/${movieId}`, {
-      state: { scrollTo: 'top' } satisfies JourneyLocationState,
+      state: {
+        scrollTo: 'top',
+        passage: {
+          id: `home-entry-${movieId}-${returnAnchor}`,
+          kind: 'home',
+          eyebrow: '主页仍替你留着刚才的位置',
+          title: '看完这段故事，可以回到出发的地方继续探索',
+          description: '风会把页面翻回你进入电影前停留的那一段，不必重新寻找入口。',
+          returnLabel,
+          returnPath: '/',
+          returnAnchor,
+        },
+      } satisfies JourneyLocationState,
     }));
   };
 
-  const enterWindRoute = () => enterMovieWorld('the-wind-rises');
+  const enterWindRoute = () => enterMovieWorld('the-wind-rises', 'wind-letter', '回到纸飞机起飞处');
 
   useLayoutEffect(() => {
     const savedPosition = sessionStorage.getItem('scrollPosition');
@@ -185,7 +198,7 @@ export const Home: React.FC = () => {
           <ChevronDown className="absolute bottom-2 z-10 h-5 w-5 animate-bounce text-white/45" />
         </section>
 
-        <section className="relative isolate min-h-[62vh] overflow-hidden border-y border-white/15" aria-label="风的第一封来信">
+        <section id="wind-letter" className="relative isolate min-h-[62vh] scroll-mt-4 overflow-hidden border-y border-white/15" aria-label="风的第一封来信">
           <img src="/images/home-paper-plane.png" alt="" className="home-paper-plane-image absolute inset-0 h-full w-full object-cover" />
           <div className="absolute inset-0 bg-[#5d5147]/32" />
           <div className="absolute inset-0 wind-route-vignette" />
@@ -211,7 +224,7 @@ export const Home: React.FC = () => {
           </div>
         </section>
 
-        <section className="relative isolate min-h-[58vh] overflow-hidden border-b border-white/15" aria-label="哈尔的移动城堡隐藏入口">
+        <section id="howl-door-entry" className="relative isolate min-h-[58vh] scroll-mt-4 overflow-hidden border-b border-white/15" aria-label="哈尔的移动城堡隐藏入口">
           <img src={howlMovie.stills[0]} alt="" className="absolute inset-0 h-full w-full object-cover" />
           <div className="absolute inset-0 bg-[#604c45]/28" />
           <div className="absolute inset-0 secret-door-entry-vignette" />
@@ -228,7 +241,7 @@ export const Home: React.FC = () => {
               </p>
               <button
                 type="button"
-                onClick={() => enterMovieWorld('howls-moving-castle')}
+                onClick={() => enterMovieWorld('howls-moving-castle', 'howl-door-entry', '回到移动城堡入口')}
                 className="mt-8 inline-flex min-h-12 items-center gap-3 rounded-lg border border-amber-100/40 bg-slate-950/35 px-5 py-3 font-semibold text-white backdrop-blur-md transition hover:bg-amber-100 hover:text-slate-900"
               >
                 <span>{discoveries.includes('moving-door') ? '再次寻找移动的门' : '跟随城堡的脚步'}</span>
@@ -238,7 +251,7 @@ export const Home: React.FC = () => {
           </div>
         </section>
 
-        <section className="relative isolate min-h-[58vh] overflow-hidden border-b border-white/15" aria-label="千与千寻水上列车隐藏入口">
+        <section id="water-train-entry" className="relative isolate min-h-[58vh] scroll-mt-4 overflow-hidden border-b border-white/15" aria-label="千与千寻水上列车隐藏入口">
           <img src="/images/home-water-train-arrival.png" alt="" className="home-water-train-image absolute inset-0 h-full w-full object-cover" />
           <div className="absolute inset-0 bg-[#46545b]/32" />
           <div className="absolute inset-0 water-entry-vignette" />
@@ -259,7 +272,7 @@ export const Home: React.FC = () => {
               </p>
               <button
                 type="button"
-                onClick={() => enterMovieWorld('spirited-away')}
+                onClick={() => enterMovieWorld('spirited-away', 'water-train-entry', '回到第六站台入口')}
                 className="mt-8 inline-flex min-h-12 items-center gap-3 rounded-lg bg-sky-100 px-5 py-3 font-semibold text-slate-900 transition hover:bg-white"
               >
                 <span>{discoveries.includes('water-rail-ticket') ? '回到水上列车' : '去听远处的汽笛'}</span>
@@ -270,6 +283,8 @@ export const Home: React.FC = () => {
         </section>
 
         <WorldAtlas />
+
+        <SummerCinema />
 
         <section id="movies" className="px-4 py-20 md:px-8 lg:px-16">
           <div className="mx-auto mb-14 max-w-6xl border-b border-white/15 pb-8 text-left">

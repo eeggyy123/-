@@ -1,4 +1,4 @@
-export type PassageKind = 'magic-door' | 'wind-route' | 'water-train' | 'recommendation' | 'world-map';
+export type PassageKind = 'home' | 'magic-door' | 'wind-route' | 'water-train' | 'recommendation' | 'world-map';
 
 export interface JourneyPassage {
   id: string;

@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { ArrowRight, Check, DoorOpen, Gift, KeyRound, Sparkles } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { ArrowRight, Castle, Check, Cog, DoorOpen, Gift, KeyRound, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { magicDoorDestinations } from '../data/journey';
 import { getMovieById, Movie } from '../data/movies';
@@ -77,18 +78,20 @@ export const HowlMagicDoor: React.FC<HowlMagicDoorProps> = ({ movie }) => {
       : 'meadow'
   ));
   const [isOpening, setIsOpening] = useState(false);
+  const [isSkyCrossing, setIsSkyCrossing] = useState(false);
 
   const selectedDoor = doors.find((door) => door.id === selectedDoorId) || doors[0];
   const destination = useMemo(
     () => getMovieById(selectedDoor.destinationId),
     [selectedDoor.destinationId],
   );
+  const skyCastle = useMemo(() => getMovieById('castle-in-the-sky'), []);
   const hasReturnedThroughSelectedDoor = returnedPassages.includes(`magic-door-${selectedDoor.id}`);
 
   if (movie.id !== 'howls-moving-castle' || !destination) return null;
 
   const handleOpenDoor = () => {
-    if (isOpening) return;
+    if (isOpening || isSkyCrossing) return;
 
     const nextOpenedDoors = new Set([...openedDoors, selectedDoor.id]);
     openMagicDoor(selectedDoor.id);
@@ -111,6 +114,28 @@ export const HowlMagicDoor: React.FC<HowlMagicDoorProps> = ({ movie }) => {
         },
       } satisfies JourneyLocationState,
     }), 1250);
+  };
+
+  const handleOpenSkyPath = () => {
+    if (isOpening || isSkyCrossing || !skyCastle) return;
+    completeRoute('howl-sky-gears');
+    setIsSkyCrossing(true);
+
+    window.setTimeout(() => navigate('/movie/castle-in-the-sky', {
+      state: {
+        scrollTo: 'top',
+        passage: {
+          id: 'magic-door-sky-gears',
+          kind: 'magic-door',
+          eyebrow: '云上的齿轮仍在缓慢转动',
+          title: '漂浮岛屿之间，还留着返回移动城堡的路',
+          description: '当云层再次合拢，散开的齿轮会重新拼成哈尔门后的入口。',
+          returnLabel: '沿云上齿轮返回哈尔',
+          returnPath: '/movie/howls-moving-castle',
+          returnAnchor: 'top',
+        },
+      } satisfies JourneyLocationState,
+    }), 3100);
   };
 
   return (
@@ -174,6 +199,15 @@ export const HowlMagicDoor: React.FC<HowlMagicDoorProps> = ({ movie }) => {
             </button>
             <span className="text-sm text-white/50">已经打开 {openedDoors.length} / 4 种颜色</span>
           </div>
+
+          <button
+            type="button"
+            onClick={handleOpenSkyPath}
+            className="howl-sky-path mt-5 inline-flex min-h-11 items-center gap-3 border border-amber-100/25 bg-slate-950/35 px-4 py-2.5 font-serif text-sm text-amber-50 transition hover:border-amber-100/55 hover:bg-white/10"
+          >
+            <Cog className="h-5 w-5" />
+            <span>门轴里还藏着一条通往《天空之城》的路</span>
+          </button>
         </div>
 
         <div className="magic-door-stage" aria-hidden="true">
@@ -195,6 +229,27 @@ export const HowlMagicDoor: React.FC<HowlMagicDoorProps> = ({ movie }) => {
           <p className="absolute bottom-[18%] font-serif text-sm tracking-[0.18em] text-white/65">门后的风景正在靠近</p>
         </div>
       )}
+
+      {isSkyCrossing && skyCastle && createPortal((
+        <div className="howl-sky-crossing fixed inset-0 z-[320] overflow-hidden" aria-live="polite">
+          <div className="howl-sky-reveal" style={{ backgroundImage: 'url("/images/stills/castle-in-the-sky-3.jpg")' }} />
+          <div className="howl-sky-clouds" aria-hidden="true" />
+          <div className="howl-sky-doorframe" aria-hidden="true" />
+
+          {[0, 1, 2, 3, 4, 5, 6].map((gear) => (
+            <Cog key={gear} className={`howl-scattering-gear howl-scattering-gear-${gear + 1}`} aria-hidden="true" />
+          ))}
+
+          <div className="howl-floating-island howl-floating-island-one" aria-hidden="true" />
+          <div className="howl-floating-island howl-floating-island-two" aria-hidden="true" />
+          <div className="howl-floating-island howl-floating-island-three" aria-hidden="true" />
+
+          <div className="howl-sky-crossing-copy">
+            <Castle className="h-8 w-8" />
+            <p>齿轮散开以后，云替城堡显出了轮廓</p>
+          </div>
+        </div>
+      ), document.body)}
     </section>
   );
 };
