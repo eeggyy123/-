@@ -6,8 +6,11 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:pages": "tsc -b && vite build --mode github-pages",
+    "package:site": "npm run build && powershell -NoProfile -ExecutionPolicy Bypass -File scripts/package-site.ps1",
     "lint": "eslint .",
     "preview": "vite preview",
+    "preview:pages": "vite preview --mode github-pages",
     "check": "tsc -b --noEmit"
   },
   "dependencies": {
